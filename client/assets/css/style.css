@@ -53,7 +53,7 @@ form.inline-form input {
     }
 }
 
-.stored-coins>a {
+.save-coin>a {
     background: #2196F3;
     padding: 5px 10px;
     border-radius: 5px;

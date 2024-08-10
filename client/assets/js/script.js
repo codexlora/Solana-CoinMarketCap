@@ -2,11 +2,10 @@ const APPCONFIG = {
   API: "http://127.0.0.1:4000",
 };
 
-let getPricesInvterval, getStoredTokensInterval;
+let getPricesInvterval;
 
 //Execute when the DOM is loaded
 document.addEventListener("DOMContentLoaded", (event) => {
-  
   //Detect the network status
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
@@ -18,13 +17,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
 //Update Online Status
 function updateOnlineStatus() {
   if (navigator.onLine) {
-    document.querySelector(".connection-status span").innerHTML = "We are online";
+    document.querySelector(".connection-status span").innerHTML =
+      "We are online";
     document.querySelector(".connection-status").classList.add("dpnone");
     document.querySelector(".connection-status").classList.remove("offline");
 
     startFetchingData();
   } else {
-    document.querySelector(".connection-status span").innerHTML = "No internet connection";
+    document.querySelector(".connection-status span").innerHTML =
+      "No internet connection";
     document.querySelector(".connection-status").classList.remove("dpnone");
     document.querySelector(".connection-status").classList.add("offline");
 
@@ -34,21 +35,19 @@ function updateOnlineStatus() {
 
 //Start Fetching Prices
 function startFetchingData() {
-  
   NotificationMSG("Actualizando Datos");
-  
+
   GetPrices();
   GetStoredTokens();
+  FormSaveStoredToken();
 
   getPricesInvterval = setInterval(GetPrices, 5000);
-  getStoredTokensInterval = setInterval(GetStoredTokens, 5000);
 }
 
 //Stop Fetching Prices
 function stopFetchingData() {
   NotificationMSG("Stop Fetch & Cleaning Intervals");
   clearInterval(getPricesInvterval);
-  clearInterval(getStoredTokensInterval);
 }
 
 //Get prices list
@@ -79,13 +78,10 @@ async function GetStoredTokens() {
 
   let divStoredToken = document.querySelector(".stored-coins");
 
-  const formAddToken = document.createElement("form");
   const ul = document.createElement("ul");
   const inlineForm = document.createElement("form");
 
   const titleNoTokensFinded = document.createElement("h3");
-  const addNewTokenButton = document.createElement("a");
-
   if (tokens.length == 0) {
     //Add title 'No tokens sabed'
     titleNoTokensFinded.innerText = "No tokends saved, please add a new one";
@@ -199,90 +195,98 @@ async function GetStoredTokens() {
       });
     });
   }
+}
 
-  //Add inline form to add new tokens
-  formAddToken.id = "add-token";
-  formAddToken.classList.add("dpnone");
+//Save a stored token
+async function FormSaveStoredToken() {
+  if (!document.querySelector(".save-coin").hasChildNodes()) {
+    const formAddToken = document.createElement("form");
+    const addNewTokenButton = document.createElement("a");
 
-  const inputTokenName = document.createElement("input");
-  inputTokenName.name = "tokenName";
-  inputTokenName.placeholder = "Token name";
-  inputTokenName.type = "text";
-  inputTokenName.required = true;
+    //Add a form to add new tokens
+    formAddToken.id = "add-token";
+    formAddToken.classList.add("dpnone");
 
-  formAddToken.insertAdjacentElement("beforeend", inputTokenName);
+    const inputTokenName = document.createElement("input");
+    inputTokenName.name = "tokenName";
+    inputTokenName.placeholder = "Token name";
+    inputTokenName.type = "text";
+    inputTokenName.required = true;
 
-  const inputTokenPublicID = document.createElement("input");
-  inputTokenPublicID.name = "tokenPublicID";
-  inputTokenPublicID.placeholder = "Token ID";
-  inputTokenPublicID.type = "text";
-  inputTokenPublicID.required = true;
+    formAddToken.insertAdjacentElement("beforeend", inputTokenName);
 
-  formAddToken.insertAdjacentElement("beforeend", inputTokenPublicID);
+    const inputTokenPublicID = document.createElement("input");
+    inputTokenPublicID.name = "tokenPublicID";
+    inputTokenPublicID.placeholder = "Token ID";
+    inputTokenPublicID.type = "text";
+    inputTokenPublicID.required = true;
 
-  const cancelUpdate = document.createElement("input");
-  cancelUpdate.type = "button";
-  cancelUpdate.value = "Cancel";
+    formAddToken.insertAdjacentElement("beforeend", inputTokenPublicID);
 
-  cancelUpdate.addEventListener("click", function (event) {
-    event.preventDefault();
-    event.target.parentElement.reset();
-    addNewTokenButton.classList.toggle("dpnone");
-    formAddToken.classList.toggle("dpnone");
-  });
+    const cancelUpdate = document.createElement("input");
+    cancelUpdate.type = "button";
+    cancelUpdate.value = "Cancel";
 
-  formAddToken.insertAdjacentElement("beforeend", cancelUpdate);
+    cancelUpdate.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.target.parentElement.reset();
+      addNewTokenButton.classList.toggle("dpnone");
+      formAddToken.classList.toggle("dpnone");
+    });
 
-  const submitInput = document.createElement("input");
-  submitInput.type = "submit";
-  submitInput.value = "Add token";
-  submitInput.disabled = true;
+    formAddToken.insertAdjacentElement("beforeend", cancelUpdate);
 
-  formAddToken.insertAdjacentElement("beforeend", submitInput);
+    const submitInput = document.createElement("input");
+    submitInput.type = "submit";
+    submitInput.value = "Add token";
+    submitInput.disabled = true;
 
-  //Form Validations
-  formAddToken.addEventListener("input", function (event) {
-    if (inputTokenName.value && inputTokenPublicID.value) {
-      submitInput.disabled = false;
-    } else {
-      submitInput.disabled = true;
-    }
-  });
+    formAddToken.insertAdjacentElement("beforeend", submitInput);
 
-  //Add token form logic
-  formAddToken.addEventListener("submit", async function (event) {
-    event.preventDefault();
-    const { target } = event;
-    const payload = {
-      tokenName: target.tokenName.value,
-      tokenPublicID: target.tokenPublicID.value,
-    };
+    //Form Validations
+    formAddToken.addEventListener("input", function (event) {
+      if (inputTokenName.value && inputTokenPublicID.value) {
+        submitInput.disabled = false;
+      } else {
+        submitInput.disabled = true;
+      }
+    });
 
-    const result = await SaveOneToken(payload);
-    if (!result) return;
+    //Add token form logic
+    formAddToken.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const { target } = event;
+      const payload = {
+        tokenName: target.tokenName.value,
+        tokenPublicID: target.tokenPublicID.value,
+      };
 
-    divStoredToken.innerHTML = "";
-    divStoredToken = null;
-  });
+      const result = await SaveOneToken(payload);
+      if (!result) return;
 
-  document
-    .querySelector(".stored-coins")
-    .insertAdjacentElement("beforeend", formAddToken);
+      document.querySelector(".save-coin").innerHTML = "";
+      FormSaveStoredToken();
+    });
 
-  //Add button to show the form to add new token
-  addNewTokenButton.text = "Add token";
-  addNewTokenButton.href = "#";
+    document
+      .querySelector(".save-coin")
+      .insertAdjacentElement("beforeend", formAddToken);
 
-  addNewTokenButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    event.target.classList.add("dpnone");
-    formAddToken.classList.toggle("dpnone");
-    inputTokenName.focus();
-  });
+    //Add button to show the form to add new token
+    addNewTokenButton.text = "Add token";
+    addNewTokenButton.href = "#";
 
-  document
-    .querySelector(".stored-coins")
-    .insertAdjacentElement("beforeend", addNewTokenButton);
+    addNewTokenButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.target.classList.add("dpnone");
+      formAddToken.classList.toggle("dpnone");
+      inputTokenName.focus();
+    });
+
+    document
+      .querySelector(".save-coin")
+      .insertAdjacentElement("beforeend", addNewTokenButton);
+  }
 }
 
 //CRUD Stored tokens
